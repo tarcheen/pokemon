@@ -6,6 +6,8 @@ Pokemon Battle Application
 
 #include <iostream>
 #include <stdlib.h>
+#include <list>
+#include <string>
 
 enum STATUS
 {
@@ -14,13 +16,19 @@ enum STATUS
 };
 
 
+// generates random number between numbers provided
+        u_int16_t generate_random(const u_int16_t& start_range, const u_int16_t& end_range)
+        {
+            return ( rand() % (end_range - start_range) ) + start_range;
+        }
+
 class Pokemon
 {
 
     protected:
 
-        int   _life;
-        bool  _dead;
+        int  _life;
+        bool _dead;
 
     public:
 
@@ -41,12 +49,6 @@ class Pokemon
 
         virtual u_int16_t attack() = 0;
         virtual void damage(u_int16_t) = 0;
-
-        // generates random number between numbers provided
-        u_int16_t generate_random(const u_int16_t& start_range, const u_int16_t& end_range) const
-        {
-            return ( rand() % (end_range - start_range) ) + start_range;
-        }
 
         int get_life() const
         {
@@ -120,7 +122,80 @@ class Squirtle : public Pokemon
         }
 };
 
+
+class Arena
+{
+
+std::list<Pokemon*> teamA;
+std::list<Pokemon*> teamB;
+
+public:
+
+    Arena(std::list<Pokemon*> t1, std::list<Pokemon*> t2) :  teamA(t1), teamB(t2)
+    {
+    }
+
+    virtual ~Arena()
+    {
+    }
+
+    std::string battle()
+    {
+        if( this->teamA.empty() || this->teamB.empty() )
+            return ("One team is missing");
+        
+        auto iteratorA = this->teamA.begin();
+        auto iteratorB = this->teamB.begin();
+
+        // choose random players
+        std::advance( iteratorA, generate_random(0,teamA.size()) );
+        std::advance( iteratorB, generate_random(0,teamB.size()) );
+        
+        while(true)
+        {
+            (*iteratorB)->damage((*iteratorA)->attack());
+            
+            if((*iteratorB)->isDead())
+            {
+                this->teamB.erase(iteratorB);
+                if(teamB.empty())
+                {
+                    return "Team A Won";
+                }
+
+                // bring cursor back to the beginning of the list
+                iteratorB = this->teamB.begin();
+                // choose another random player
+                std::advance( iteratorB, generate_random(0,teamB.size()) );
+            }
+
+            (*iteratorA)->damage((*iteratorB)->attack());
+            
+            if((*iteratorA)->isDead())
+            {
+                this->teamA.erase(iteratorA);
+                if(teamA.empty())
+                {
+                    return "Team B Won";
+                }
+
+                // bring cursor back to the beginning of the list
+                iteratorA = this->teamA.begin();
+                // choose another random player
+                std::advance( iteratorA, generate_random(0,teamA.size()) );
+            }
+        }
+    }
+
+};
+
 int main(void)
 {
     srand(time(NULL));
+
+    std::list<Pokemon*> teamA {new Squirtle(), new Pikachu()};
+    std::list<Pokemon*> teamB {new Squirtle(),new Squirtle()};
+
+    Arena a1(teamA,teamB);
+    std::cout<< a1.battle() << std::endl;
 }
