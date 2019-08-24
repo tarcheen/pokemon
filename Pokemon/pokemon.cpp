@@ -7,20 +7,24 @@ Pokemon Battle Application
 #include <iostream>
 #include <stdlib.h>
 #include <list>
+#include <vector>
 #include <string>
 
 enum STATUS
 {
     DOUBLE = 2,
     ESCAPE,
+    WIN,
+    LOST,
+    INVALID,
 };
 
 
 // generates random number between numbers provided
-        u_int16_t generate_random(const u_int16_t& start_range, const u_int16_t& end_range)
-        {
-            return ( rand() % (end_range - start_range) ) + start_range;
-        }
+u_int16_t generate_random(const u_int16_t& start_range, const u_int16_t& end_range)
+{
+    return ( rand() % (end_range - start_range) ) + start_range;
+}
 
 class Pokemon
 {
@@ -29,11 +33,13 @@ class Pokemon
 
         int  _life;
         bool _dead;
+        std::string _name;
 
     public:
 
-        Pokemon(u_int16_t start_range = 50, u_int16_t end_range = 100)
+        Pokemon(std::string n, u_int16_t start_range = 50, u_int16_t end_range = 100)
         {
+            this->_name = n;
             this->_life = generate_random(start_range, end_range);
             this->_dead = false;
         }
@@ -54,13 +60,18 @@ class Pokemon
         {
             return this-> _life;
         }
+
+        std::string get_name() const
+        {
+            return this->_name;
+        }
 };
 
 class Pikachu : public Pokemon
 {
     public:
 
-        Pikachu() : Pokemon()
+        Pikachu(std::string n = "Unknown") : Pokemon(n)
         {   
         }
 
@@ -101,7 +112,7 @@ class Squirtle : public Pokemon
 {
     public:
 
-        Squirtle() : Pokemon(70,100)
+        Squirtle(std::string n = "Unknown") : Pokemon(n,70,100)
         {
         }
 
@@ -133,16 +144,17 @@ public:
 
     Arena(std::list<Pokemon*> t1, std::list<Pokemon*> t2) :  teamA(t1), teamB(t2)
     {
+
     }
 
     virtual ~Arena()
     {
     }
 
-    std::string battle()
+    STATUS battle()
     {
         if( this->teamA.empty() || this->teamB.empty() )
-            return ("One team is missing");
+            return INVALID;
         
         auto iteratorA = this->teamA.begin();
         auto iteratorB = this->teamB.begin();
@@ -160,7 +172,7 @@ public:
                 this->teamB.erase(iteratorB);
                 if(teamB.empty())
                 {
-                    return "Team A Won";
+                    return WIN;
                 }
 
                 // bring cursor back to the beginning of the list
@@ -176,7 +188,7 @@ public:
                 this->teamA.erase(iteratorA);
                 if(teamA.empty())
                 {
-                    return "Team B Won";
+                    return LOST;
                 }
 
                 // bring cursor back to the beginning of the list
@@ -193,9 +205,25 @@ int main(void)
 {
     srand(time(NULL));
 
-    std::list<Pokemon*> teamA {new Squirtle(), new Pikachu()};
-    std::list<Pokemon*> teamB {new Squirtle(),new Squirtle()};
+    std::list<Pokemon*> teamA {new Squirtle("Super Squirtle"), new Pikachu("P1")};
+    std::list<Pokemon*> teamB {new Squirtle("S2"),new Squirtle("S3")};
 
     Arena a1(teamA,teamB);
-    std::cout<< a1.battle() << std::endl;
+    STATUS result = a1.battle();
+
+    switch (result)
+    {
+    case INVALID:
+        std::cout<<"One team is not prepared"<<std::endl;
+        break;
+    case WIN:
+        std::cout<<"Team A wins"<<std::endl;
+        break;
+    case LOST:
+        std::cout<<"Team A lost"<<std::endl;
+        break;
+    default:
+        std::cout<<"invalid output"<<std::endl;
+        break;
+    }
 }
